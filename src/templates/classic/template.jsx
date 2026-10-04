@@ -30,9 +30,9 @@ export default function ClassicTemplate({ card }) {
         {message || 'Your message will appear here'}
       </div>
 
-      {senderName && (
-        <div className="classic-card__sender">— {senderName}</div>
-      )}
+      <div className="classic-card__sender">
+        — {senderName || 'Sender'}
+      </div>
     </div>
   );
 }

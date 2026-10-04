@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const API_URL = import.meta.env.VITE_API_URL || '';
+const API_URL = import.meta.env.VITE_API_URL?.replace(/\/+$/, '') || '';
 
 export default function ServerStatus() {
   // states: 'idle' | 'checking' | 'waking' | 'ready' | 'error'
@@ -10,6 +10,13 @@ export default function ServerStatus() {
   const [isMinimized, setIsMinimized] = useState(false);
 
   const checkHealth = useCallback(async () => {
+    // If VITE_API_URL is missing, treat as server in maintenance
+    if (!API_URL) {
+      setStatus('error');
+      setMessage('The dispatch server is currently undergoing maintenance. Owl post will be back shortly.');
+      return;
+    }
+
     setStatus('checking');
     setMessage('Connecting to server...');
 
@@ -20,26 +27,33 @@ export default function ServerStatus() {
     }, 2500);
 
     try {
-      const res = await fetch(`${API_URL}/`, { method: 'GET' });
+      const res = await fetch(`${API_URL}/health`, { method: 'GET' });
       clearTimeout(wakeTimer);
 
       if (res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setStatus('ready');
-        setMessage(data.message || 'Owl post is online and ready!');
+        const data = await res.json().catch(() => null);
 
-        // Minimize into a small status pill after 4.5 seconds
-        setTimeout(() => {
-          setIsMinimized(true);
-        }, 4500);
+        // Verify this is actually our backend service, not a generic 200 HTML page
+        if (data && data.service === 'send-an-owl') {
+          setStatus('ready');
+          setMessage(data.message || 'Owl post is online and ready!');
+
+          // Minimize into a small status pill after 4.5 seconds
+          setTimeout(() => {
+            setIsMinimized(true);
+          }, 4500);
+        } else {
+          setStatus('error');
+          setMessage('Server in maintenance. Please check back shortly.');
+        }
       } else {
         setStatus('error');
-        setMessage(`Server returned status ${res.status}`);
+        setMessage('Server in maintenance. Please check back shortly.');
       }
     } catch {
       clearTimeout(wakeTimer);
       setStatus('error');
-      setMessage('Unable to reach server. Click to retry.');
+      setMessage('Server in maintenance. Please check back shortly.');
     }
   }, []);
 
@@ -50,7 +64,7 @@ export default function ServerStatus() {
   if (status === 'idle') return null;
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 pointer-events-auto">
+    <div className="fixed bottom-4 right-4 left-4 sm:left-auto sm:right-5 sm:bottom-5 z-50 pointer-events-none flex justify-end">
       <AnimatePresence mode="wait">
         {isMinimized ? (
           // Minimized pill
@@ -60,23 +74,22 @@ export default function ServerStatus() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8 }}
             onClick={() => setIsMinimized(false)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-stone-950/80 border border-stone-700/60 shadow-lg backdrop-blur-md text-xs font-sans text-parchment/90 hover:border-sunset-500/50 transition-colors cursor-pointer"
+            className="pointer-events-auto flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-stone-950/85 border border-stone-700/60 shadow-lg backdrop-blur-md text-xs font-sans text-parchment/90 hover:border-sunset-500/50 transition-colors cursor-pointer"
             title="Click to view server status"
           >
             <span
-              className={`w-2 h-2 rounded-full ${status === 'ready'
+              className={`w-2 h-2 rounded-full ${
+                status === 'ready'
                   ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]'
-                  : status === 'error'
-                    ? 'bg-red-400'
-                    : 'bg-amber-400 animate-pulse'
-                }`}
+                  : 'bg-amber-400'
+              }`}
             />
             <span>
               {status === 'ready'
                 ? 'Server Ready'
-                : status === 'error'
-                  ? 'Server Offline'
-                  : 'Waking up...'}
+                : status === 'waking'
+                ? 'Waking up...'
+                : 'Server in maintenance'}
             </span>
           </motion.button>
         ) : (
@@ -87,24 +100,24 @@ export default function ServerStatus() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="max-w-sm w-full p-4 rounded-xl bg-stone-950/90 border border-stone-800 shadow-2xl backdrop-blur-md text-parchment"
+            className="pointer-events-auto w-full sm:max-w-sm p-3.5 sm:p-4 rounded-xl bg-stone-950/92 border border-stone-800 shadow-2xl backdrop-blur-md text-parchment"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 {/* Status Dot */}
-                <span className="relative flex h-3 w-3 mt-0.5">
-                  {status === 'waking' || status === 'checking' ? (
-                    <>
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
-                    </>
-                  ) : status === 'ready' ? (
+                <span className="relative flex h-3 w-3 mt-0.5 flex-shrink-0">
+                  {status === 'ready' ? (
                     <>
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-40" />
                       <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500" />
                     </>
+                  ) : status === 'waking' || status === 'checking' ? (
+                    <>
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500" />
+                    </>
                   ) : (
-                    <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500" />
+                    <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-400" />
                   )}
                 </span>
 
@@ -113,12 +126,12 @@ export default function ServerStatus() {
                     {status === 'ready'
                       ? 'Owl Post Online'
                       : status === 'waking'
-                        ? 'Server Waking Up'
-                        : status === 'checking'
-                          ? 'Connecting...'
-                          : 'Server Offline'}
+                      ? 'Server Waking Up'
+                      : status === 'checking'
+                      ? 'Connecting...'
+                      : 'Server in maintenance'}
                   </h4>
-                  <p className="text-xs text-parchment/70 mt-0.5 leading-relaxed">
+                  <p className="text-xs text-parchment/70 mt-0.5 leading-relaxed break-words">
                     {message}
                   </p>
                 </div>
@@ -127,14 +140,14 @@ export default function ServerStatus() {
               {/* Close / Minimize button */}
               <button
                 onClick={() => setIsMinimized(true)}
-                className="text-parchment/40 hover:text-parchment/80 transition-colors p-1 text-xs"
+                className="text-parchment/40 hover:text-parchment/80 transition-colors p-1 text-xs cursor-pointer flex-shrink-0"
                 title="Minimize"
               >
                 ✕
               </button>
             </div>
 
-            {/* Action or Progress */}
+            {/* Progress bar when waking up */}
             {status === 'waking' && (
               <div className="mt-3 w-full bg-stone-800 rounded-full h-1.5 overflow-hidden">
                 <motion.div
@@ -152,7 +165,7 @@ export default function ServerStatus() {
               </div>
             )}
 
-            {status === 'error' && (
+            {status === 'error' && API_URL && (
               <div className="mt-3 pt-2 border-t border-stone-800/80 flex justify-end">
                 <button
                   onClick={checkHealth}

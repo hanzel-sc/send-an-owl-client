@@ -37,9 +37,9 @@ const socialLinks = [
 export default function Footer() {
   return (
     <footer className="border-t border-parchment/10 bg-[#0f0a06] text-parchment/60">
-      <div className="max-w-7xl mx-auto px-6 py-10 flex flex-col sm:flex-row items-center justify-between gap-6">
-        <div className="flex items-center gap-3">
-          <span className="font-serif text-md text-parchment tracking-wide">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 flex flex-col sm:flex-row items-center justify-between gap-5 sm:gap-6">
+        <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 text-center sm:text-left">
+          <span className="font-serif text-sm sm:text-base text-parchment tracking-wide">
             Send an Owl
           </span>
           <span className="text-parchment/30 text-xs hidden sm:inline">•</span>

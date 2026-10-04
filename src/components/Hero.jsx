@@ -16,27 +16,27 @@ export default function Hero() {
       <img
         src="/assets/landing/hero.png"
         alt="A majestic owl perched on a tree branch at sunset"
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover object-[75%_center] sm:object-center"
       />
 
       {/* Subtle overlay for text legibility */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 sm:via-transparent to-transparent pointer-events-none" />
 
-      {/* Hero content — positioned in the upper right, left-aligned to match the design */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-8 sm:px-12 lg:px-20 h-full flex justify-end pt-[13vh] sm:pt-[15vh] lg:pt-[17vh]">
-        <div className="text-left max-w-lg -mr-4 sm:-mr-8 lg:-mr-32">
-          <h1 className="font-serif text-2xl sm:text-3xl md:text-4xl lg:text-[40px] font-normal text-white text-left space-y-6 sm:space-y-8 select-none tracking-normal">
+      {/* Hero content — positioned in the upper right on desktop, nicely padded on mobile */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto px-5 sm:px-10 lg:px-20 h-full flex justify-center sm:justify-end pt-[12vh] sm:pt-[15vh] lg:pt-[17vh]">
+        <div className="text-left w-full sm:max-w-lg mr-0 sm:-mr-6 lg:-mr-24">
+          <h1 className="font-serif text-2xl xs:text-3xl sm:text-3xl md:text-4xl lg:text-[40px] font-normal text-white text-left space-y-4 sm:space-y-6 lg:space-y-8 select-none tracking-normal">
             <span className="block">Pick a template.</span>
             <span className="block">Personalize your message.</span>
             <span className="block">Dispatch the owl.</span>
           </h1>
 
-          <div className="mt-8 sm:mt-10 flex justify-start">
+          <div className="mt-6 sm:mt-8 lg:mt-10 flex justify-start">
             <HoverBorderGradient
               onClick={scrollToCreator}
               aria-label="Get started — scroll to card creator"
             >
-              <span className="text-white font-sans text-base tracking-wide">
+              <span className="text-white font-sans text-sm sm:text-base tracking-wide">
                 Get started ↗
               </span>
             </HoverBorderGradient>

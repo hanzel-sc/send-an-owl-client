@@ -58,6 +58,7 @@ export default function App() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [mobileTab, setMobileTab] = useState('edit'); // 'edit' | 'preview'
 
   const handleSubmit = useCallback(async () => {
     setErrors(null);
@@ -66,12 +67,17 @@ export default function App() {
     const validationErrors = validate(card);
     if (validationErrors) {
       setErrors(validationErrors);
+      setMobileTab('edit'); // Switch to edit view on mobile so user sees the errors
       return;
     }
 
     setIsSubmitting(true);
 
     try {
+      if (!API_URL) {
+        throw new Error('Server in maintenance. Please try again shortly.');
+      }
+
       const formData = new FormData();
       formData.append('template', card.template);
       formData.append('recipientName', card.recipientName);
@@ -108,6 +114,7 @@ export default function App() {
     setErrors(null);
     setSubmitError('');
     setIsSuccess(false);
+    setMobileTab('edit');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -121,52 +128,92 @@ export default function App() {
       {/* Card Creator */}
       <section
         id="create"
-        className="relative min-h-screen py-20 px-6"
+        className="relative min-h-screen py-12 sm:py-16 lg:py-20 px-4 sm:px-6 lg:px-8"
         style={{
           backgroundImage: 'url(/assets/landing/background.png)',
           backgroundSize: 'cover',
           backgroundPosition: 'center top',
-          backgroundAttachment: 'fixed',
         }}
         aria-label="Create your card"
       >
         {/* Dark overlay */}
-        <div className="absolute inset-0 bg-black/70" />
+        <div className="absolute inset-0 bg-black/75" />
 
         <div className="relative z-10 max-w-7xl mx-auto">
-          <h2 className="font-serif text-3xl sm:text-4xl text-parchment text-center mb-16">
+          <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-parchment text-center mb-6 sm:mb-10 lg:mb-14">
             Create your card
           </h2>
 
           {isSuccess ? (
             <SuccessState onReset={handleReset} />
           ) : isSubmitting ? (
-            <div className="flex items-center justify-center py-32">
+            <div className="flex items-center justify-center py-24 sm:py-32">
               <Loader text="The owl is preparing your card..." />
             </div>
           ) : (
             <>
               {submitError && (
-                <div className="max-w-2xl mx-auto mb-8 p-4 bg-red-900/30 border border-red-500/30 rounded-lg text-red-300 text-sm text-center">
+                <div className="max-w-2xl mx-auto mb-6 sm:mb-8 p-3.5 sm:p-4 bg-red-900/30 border border-red-500/30 rounded-xl text-red-300 text-xs sm:text-sm text-center">
                   {submitError}
                 </div>
               )}
 
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-start">
-                {/* Form */}
-                <div>
+              {/* Mobile / Tablet Segmented Toggle (hidden on desktop lg) */}
+              <div className="flex lg:hidden justify-center mb-6">
+                <div className="inline-flex p-1 rounded-xl bg-stone-900/85 border border-parchment/15 backdrop-blur-md shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => setMobileTab('edit')}
+                    className={`px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all ${
+                      mobileTab === 'edit'
+                        ? 'bg-sunset-600 text-white shadow-sm'
+                        : 'text-parchment/60 hover:text-parchment'
+                    }`}
+                  >
+                    Edit details
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMobileTab('preview')}
+                    className={`px-4 py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-all flex items-center gap-1.5 ${
+                      mobileTab === 'preview'
+                        ? 'bg-sunset-600 text-white shadow-sm'
+                        : 'text-parchment/60 hover:text-parchment'
+                    }`}
+                  >
+                    <span>Card preview</span>
+                    {card.template && (
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-start">
+                {/* Form Column */}
+                <div className={mobileTab === 'edit' ? 'block' : 'hidden lg:block'}>
                   <CardForm
                     card={card}
                     setCard={setCard}
                     onSubmit={handleSubmit}
                     isSubmitting={isSubmitting}
                     errors={errors}
+                    onViewPreview={() => setMobileTab('preview')}
                   />
                 </div>
 
-                {/* Preview */}
-                <div className="lg:sticky lg:top-8">
-                  <CardPreview card={card} />
+                {/* Preview Column */}
+                <div
+                  className={`lg:sticky lg:top-8 ${
+                    mobileTab === 'preview' ? 'block' : 'hidden lg:block'
+                  }`}
+                >
+                  <CardPreview
+                    card={card}
+                    onEdit={() => setMobileTab('edit')}
+                    onSubmit={handleSubmit}
+                    isSubmitting={isSubmitting}
+                  />
                 </div>
               </div>
             </>

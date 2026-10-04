@@ -27,7 +27,7 @@ export default function ServerStatus() {
     }, 2500);
 
     try {
-      const res = await fetch(`${API_URL}/health`, { method: 'GET' });
+      const res = await fetch(`${API_URL}/`, { method: 'GET' });
       clearTimeout(wakeTimer);
 
       if (res.ok) {
